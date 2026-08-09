@@ -6,9 +6,10 @@ using eCommerce.ProductsMicroService.API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services from data access layer
+// Add services from data access layer,
+// remember to pass the configuration (for conn string reading)
 
-builder.Services.AddDataAccessLayer();
+builder.Services.AddDataAccessLayer(builder.Configuration);
 
 // Add services from business logic layer
 
