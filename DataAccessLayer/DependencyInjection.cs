@@ -21,6 +21,8 @@ public static class DependencyInjection
         });
 
         services.AddScoped<IProductsRepository, ProductsRepository>();
+
+        
         return services;
     }
 }
