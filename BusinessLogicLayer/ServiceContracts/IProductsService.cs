@@ -13,8 +13,7 @@ public interface IProductsService
     /// <returns>List of ProductResponse</returns>
     Task<List<ProductResponse?>> GetProducts();
 
-    Task<List<ProductResponse?>> GetProductsByCondition
-        (Expression<Func<Product, bool>> conditionExpression);
+    Task<List<ProductResponse?>> GetProductsByCondition (Expression<Func<Product, bool>> conditionExpression);
 
     /// <summary>
     /// Returns single product
@@ -22,8 +21,7 @@ public interface IProductsService
     /// <param name="conditionExpression"></param>
     /// <returns>Product</returns>
 
-    Task<Product?> GetProductByCondition
-    (Expression<Func<Product, bool>> conditionExpression);
+    Task<ProductResponse?> GetProductByCondition (Expression<Func<Product, bool>> conditionExpression);
 
     /// <summary>
     /// Adds product into the table
@@ -32,7 +30,7 @@ public interface IProductsService
     /// <returns></returns>
     Task<ProductResponse?> AddProduct (ProductAddRequest productAddRequest);
 
-    Task<ProductResponse?> UpdateProduct (ProductAddRequest productAddRequest);
+    Task<ProductResponse?> UpdateProduct (ProductUpdateRequest productUpdateRequest);
 
     /// <summary>
     /// Deletes the product based on product id
