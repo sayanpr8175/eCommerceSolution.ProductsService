@@ -1,6 +1,6 @@
 ﻿
 
-using DataAccessLayer.Entities;
+using eCommerce.DataAccessLayer.Entities;
 using System.Linq.Expressions;
 
 namespace eCommerce.DataAccessLayer.RepositoryContracts;

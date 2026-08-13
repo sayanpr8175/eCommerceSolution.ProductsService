@@ -1,6 +1,6 @@
 ﻿
 using DataAccessLayer.Context;
-using DataAccessLayer.Entities;
+using eCommerce.DataAccessLayer.Entities;
 using eCommerce.DataAccessLayer.RepositoryContracts;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;

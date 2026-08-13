@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DataAccessLayer.Entities;
+namespace eCommerce.DataAccessLayer.Entities;
 
 public class Product
 {
