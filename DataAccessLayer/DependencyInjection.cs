@@ -14,10 +14,17 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
 
+        // Updated connection string for reading credentials from env variable in docker.
+
+        string connectionTemplate = configuration.GetConnectionString("DefaultConnection")!;
+
+        string connString = connectionTemplate.Replace("$MYSQL_HOST", Environment.GetEnvironmentVariable("MYSQL_HOST"))
+            .Replace("$MYSQL_PASSWORD", Environment.GetEnvironmentVariable("MYSQL_PASSWORD"));
+
         // Add data access layer services into the IOC container.
 
         services.AddDbContext<ApplicationDbContext>(
-            options => { options.UseMySQL(configuration.GetConnectionString("DefaultConnection")!);
+            options => { options.UseMySQL(connString);
         });
 
         services.AddScoped<IProductsRepository, ProductsRepository>();
