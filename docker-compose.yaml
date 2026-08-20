@@ -1,11 +1,11 @@
-version: 5.3.1
+version: "5.3.1"
 services:
  mysql-container:
   image: mysql:latest
   environment:
-   - MYSQL_ROOT_PASSWORD: admin
+   MYSQL_ROOT_PASSWORD: admin
   ports:
-   - 3306:3306
+   - "3306:3306"
   volumes:
    - ./scripts:/docker-entrypoint-initdb.d
   networks:
@@ -15,14 +15,15 @@ services:
  products-microservice:
   image: sayanpr99/sayan-ecom-products-microservice:v1.0
   environment: 
-   - MYSQL_HOST: mysql-host-products-microservice
-   - MYSQL_PASSWORD: admin
+   MYSQL_HOST: mysql-host-products-microservice
+   MYSQL_PASSWORD: admin
   ports:
-   - 8080:8080
-   - 8081:8081
+   - "8080:8080"
+   - "8081:8081"
   networks:
    - products-microservice-network
 
 
 networks:
- products-microservice-network
+ products-microservice-network:
+  driver: bridge
