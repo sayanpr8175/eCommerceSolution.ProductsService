@@ -30,6 +30,14 @@ namespace eCommerce.ProductsMicroService.API.APIEndpoints
                 ProductResponse? product = await 
                 productsService.GetProductByCondition(t => t.ProductID == ProductID);
 
+                if(product == null)
+                {
+                    return Results.NotFound();
+                }
+                // port 3306
+                //ecommerceproductsdatabase
+                //root
+
                 return Results.Ok(product);
             });
 
