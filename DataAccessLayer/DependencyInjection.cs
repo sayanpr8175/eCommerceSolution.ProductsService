@@ -19,7 +19,10 @@ public static class DependencyInjection
         string connectionTemplate = configuration.GetConnectionString("DefaultConnection")!;
 
         string connString = connectionTemplate.Replace("$MYSQL_HOST", Environment.GetEnvironmentVariable("MYSQL_HOST"))
-            .Replace("$MYSQL_PASSWORD", Environment.GetEnvironmentVariable("MYSQL_PASSWORD"));
+            .Replace("$MYSQL_PASSWORD", Environment.GetEnvironmentVariable("MYSQL_PASSWORD"))
+            .Replace("$MYSQL_PORT", Environment.GetEnvironmentVariable("MYSQL_PORT"))
+            .Replace("$MYSQL_USER", Environment.GetEnvironmentVariable("MYSQL_USER"))
+            .Replace("$MYSQL_DATABASE", Environment.GetEnvironmentVariable("MYSQL_DATABASE"));
 
         // Add data access layer services into the IOC container.
 
