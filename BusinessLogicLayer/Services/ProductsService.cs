@@ -3,6 +3,7 @@ using eCommerce.BusinessLogicLayer.DTO;
 using eCommerce.BusinessLogicLayer.ServiceContracts;
 using eCommerce.DataAccessLayer.Entities;
 using eCommerce.DataAccessLayer.RepositoryContracts;
+using eCommerce.ProductsService.BusinessLogicLayer.RabbitMQ;
 using FluentValidation;
 using FluentValidation.Results;
 using System.Linq.Expressions;
@@ -15,15 +16,18 @@ public class ProductsService : IProductsService
     private readonly IValidator<ProductUpdateRequest> _productUpdateRequestValidator;
     private readonly IMapper _mapper;
     private readonly IProductsRepository _productsRepository;
+    private readonly IRabbitMQPublisher _rabbitMQPublisher;
 
     public ProductsService(IValidator<ProductAddRequest> productAddRequestValidator,
         IValidator<ProductUpdateRequest> productUpdateRequestValidator,
-        IMapper mapper, IProductsRepository productsRepository)
+        IMapper mapper, IProductsRepository productsRepository,
+        IRabbitMQPublisher rabbitMQPublisher)
     {
         _productAddRequestValidator = productAddRequestValidator;
         _productUpdateRequestValidator = productUpdateRequestValidator;
         _mapper = mapper;
         _productsRepository = productsRepository;
+        _rabbitMQPublisher = rabbitMQPublisher;
 
     }
 
@@ -124,7 +128,17 @@ public class ProductsService : IProductsService
 
         Product product = _mapper.Map<Product>(productUpdateRequest);
 
+        bool isProductNameChanged = (productUpdateRequest.ProductName != productObj.ProductName);
+
         Product? updatedProduct =  await _productsRepository.UpdateProduct(product);
+
+        if (isProductNameChanged)
+        {
+            string routingKey = "product.update.name";
+            var message = new ProductNameUpdateMessage(product.ProductID, product.ProductName);
+
+            _rabbitMQPublisher.Publish<ProductNameUpdateMessage>(routingKey, message);
+        }
 
         ProductResponse prodResp = _mapper.Map<ProductResponse>(updatedProduct);
 
@@ -132,7 +146,6 @@ public class ProductsService : IProductsService
         
     }
 
-    
-
+   
     
 }
