@@ -73,6 +73,18 @@ public class ProductsService : IProductsService
 
         bool success = await _productsRepository.DeleteProduct(productID);
 
+        // We are publishing deletion message in case of product delete.
+        if(success)
+        {
+            ProductDeleteMessage message = new ProductDeleteMessage(
+                productObj.ProductID,
+                productObj.ProductName);
+
+            string routingKey = "product.delete";
+
+            _rabbitMQPublisher.Publish<ProductDeleteMessage>(routingKey, message);
+        }
+
         return success;
     }
 
