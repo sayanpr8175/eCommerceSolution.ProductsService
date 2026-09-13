@@ -80,9 +80,20 @@ public class ProductsService : IProductsService
                 productObj.ProductID,
                 productObj.ProductName);
 
-            string routingKey = "product.delete";
+            // string routingKey = "product.delete";
 
-            _rabbitMQPublisher.Publish<ProductDeleteMessage>(routingKey, message);
+            // This was for old direct exchange method
+            // _rabbitMQPublisher.Publish<ProductDeleteMessage>(routingKey, message);
+
+            // implementing headers exchange as it is widely used.
+
+            var headers = new Dictionary<string, object>()
+            {
+                {"event", "product.delete" },
+                {"RowCount", 1 }
+            };
+
+            _rabbitMQPublisher.Publish<ProductDeleteMessage>(headers, message);
         }
 
         return success;
@@ -146,10 +157,23 @@ public class ProductsService : IProductsService
 
         if (isProductNameChanged)
         {
-            string routingKey = "product.update.name";
+            //string routingKey = "product.update.name";
             var message = new ProductNameUpdateMessage(product.ProductID, product.ProductName);
 
-            _rabbitMQPublisher.Publish<ProductNameUpdateMessage>(routingKey, message);
+            //this was for direct exchange
+            // _rabbitMQPublisher.Publish<ProductNameUpdateMessage>(routingKey, message); 
+
+            // this new invoking is for headers exchange
+          
+            var headers = new Dictionary<string, object>()
+            {
+                {"event", "product.update" },
+                {"field", "name"},
+                {"RowCount", 1 }
+            };
+
+            _rabbitMQPublisher.Publish<ProductNameUpdateMessage>(headers, message);
+
         }
 
         ProductResponse prodResp = _mapper.Map<ProductResponse>(updatedProduct);

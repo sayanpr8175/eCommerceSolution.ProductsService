@@ -43,6 +43,37 @@ public class RabbitMQPublisher : IRabbitMQPublisher, IDisposable
 
 
 
+    public void Publish<T>(Dictionary<string, object> headers, T message)
+    {
+        string messageJson = JsonSerializer.Serialize(message);
+        byte[] messageBodyInBytes = Encoding.UTF8.GetBytes(messageJson);
+
+        // Exchange Creation
+
+        string exchangeName = _configuration["RabbitMQ_Products_Exchange"]!;
+
+        _channel.ExchangeDeclare(exchange: exchangeName,
+            //type: ExchangeType.Direct,
+            //type: ExchangeType.Topic,
+            type: ExchangeType.Headers,
+            durable: true);
+
+        // Publish Message
+
+        var basicProperties = _channel.CreateBasicProperties();
+        basicProperties.Headers = headers;
+
+
+        _channel.BasicPublish(exchangeName,
+            routingKey: string.Empty,
+            basicProperties: basicProperties,
+            body: messageBodyInBytes);
+
+    }
+
+
+
+    
     public void Publish<T>(string routingKey, T message)
     {
         string messageJson = JsonSerializer.Serialize(message);
@@ -54,6 +85,8 @@ public class RabbitMQPublisher : IRabbitMQPublisher, IDisposable
 
         _channel.ExchangeDeclare(exchange: exchangeName,
             type: ExchangeType.Direct,
+            //type: ExchangeType.Topic,
+            //type: ExchangeType.Headers,
             durable: true);
 
         // Publish Message
@@ -63,4 +96,7 @@ public class RabbitMQPublisher : IRabbitMQPublisher, IDisposable
             body: messageBodyInBytes);
 
     }
+    
+    
+
 }
