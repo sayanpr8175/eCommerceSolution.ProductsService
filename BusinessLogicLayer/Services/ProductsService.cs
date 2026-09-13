@@ -151,12 +151,13 @@ public class ProductsService : IProductsService
 
         Product product = _mapper.Map<Product>(productUpdateRequest);
 
-        bool isProductNameChanged = (productUpdateRequest.ProductName != productObj.ProductName);
+        //bool isProductNameChanged = (productUpdateRequest.ProductName != productObj.ProductName);
 
         Product? updatedProduct =  await _productsRepository.UpdateProduct(product);
 
-        if (isProductNameChanged)
-        {
+        //if (isProductNameChanged)
+        //{
+        //}
             //string routingKey = "product.update.name";
             var message = new ProductNameUpdateMessage(product.ProductID, product.ProductName);
 
@@ -168,13 +169,10 @@ public class ProductsService : IProductsService
             var headers = new Dictionary<string, object>()
             {
                 {"event", "product.update" },
-                {"field", "name"},
-                {"RowCount", 1 }
+                {"RowCount", 1}
             };
 
-            _rabbitMQPublisher.Publish<ProductNameUpdateMessage>(headers, message);
-
-        }
+            _rabbitMQPublisher.Publish<Product>(headers, product);
 
         ProductResponse prodResp = _mapper.Map<ProductResponse>(updatedProduct);
 
