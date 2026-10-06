@@ -1,0 +1,173 @@
+trigger:
+ branches:
+  include:
+    - dev
+    - qa
+    - uat
+    - staging
+    - prod
+
+resources:
+- repo: self
+
+variables:
+  - name: dockerRegistryServiceConnection
+    value: '07181348-db4a-4fab-9032-7b3636e96543'
+  - name: imageRepository
+    value: 'products'
+  - name: containerRegistry
+    value: 'sayanecommerceregistry.azurecr.io'
+  - name: dockerfilePath
+    value: '$(Build.SourcesDirectory)/ProductsMicroService.API/Dockerfile'
+  - name: tag
+    value: '$(Build.BuildId)'
+  - name: linuxvmImageName
+    value: 'ubuntu-latest'
+  - name: windowsVMImageName
+    value: 'windows-latest'
+  - name: aksClusterName
+    value: 'ecommerce-aks-cluster'
+  - name: devAksServiceConnectionName
+    value: 'dev-ecommerce-aks-cluster-dev-1790626067044'
+  - name: 'qaAksServiceConnectionName'
+    value: 'qa-ecommerce-aks-cluster-qa-1790627566595'
+  - name: uatAksServiceConnectionName
+    value: 'uat-ecommerce-aks-cluster-uat-1790627696087'
+  - name: stagingAksServiceConnectionName
+    value: 'staging-ecommerce-aks-cluster-stage-1790627868909'
+  - name: 'prodAksServiceConnectionName'
+    value: 'prod-ecommerce-aks-cluster-prod-1790628180560'
+  - name: devkubernetesNamespace
+    value: 'dev'
+  - name: qakubernetesNamespace
+    value: 'qa'
+  - name: uatkubernetesNamespace
+    value: 'uat'
+  - name: stagekubernetesNamespace
+    value: 'stage'
+  - name: prodkubernetesNamespace
+    value: 'prod'
+  - name: resourceGroupServiceConnectionName
+    value: 'ecommerce-resource-group-connection'
+  - name: keyVaultName
+    value: 'products-pipeline-sayan'
+
+
+stages:
+
+- stage: InitializeKeyVault
+  displayName: Initialize Key Vault Secrets
+  jobs:
+  - job: FetchSecrets
+    displayName: Fetch Key Vault Secrets
+    pool:
+      vmImage: '$(linuxvmImageName)'
+    steps:
+      - task: AzureKeyVault@2
+        displayName: Fetch Key Vault Secrets
+        inputs:
+          azureSubscription: $(resourceGroupServiceConnectionName)
+          keyVaultName: '$(keyVaultName)'
+          SecretsFilter: '*'
+          RunAsPreJob: true
+
+
+- stage: Build
+  displayName: Build and push stage
+  jobs:
+  - job: Build
+    displayName: Docker Build
+    pool:
+      vmImage: $(linuxvmImageName)
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: $(dockerfilePath)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(tag)
+        buildContext: $(Build.SourcesDirectory)
+
+
+- stage: Test
+  displayName: Test and publish results stage
+  jobs:
+  - job: RunTest
+    displayName: Run Unit tests
+    pool:
+     vmImage: $(windowsVMImageName)
+    steps:
+    - checkout: self
+      displayName: Checkout source code
+
+    - task: NuGetToolInstaller@1
+      displayName: Install NugetTool
+
+    - task: NuGetCommand@2
+      displayName: Restore nuget packages
+      inputs:
+        command: 'restore'
+        restoreSolution: '**/*.sln'
+        feedsToUse: 'select'
+
+    - task: MSBuild@1
+      displayName: Build Solution
+      inputs:
+        solution: '**/*.sln'
+        msbuildArchitecture: 'x64'
+        platform: 'Any CPU'
+        configuration: 'Release'
+        msbuildArguments: '/p:Configuration=Release'
+        
+
+    - task: VSTest@3
+      displayName: Running tests
+      inputs:
+        testSelector: 'testAssemblies'
+        testAssemblyVer2: |
+          **\ProductsUnitTests.dll
+          !**\*TestAdapter.dll
+          !**\obj\**
+        searchFolder: '$(System.DefaultWorkingDirectory)'
+        runTestsInIsolation: true
+        codeCoverageEnabled: true
+
+
+- stage: DeployToDev
+  displayName: Deploy to Dev
+  dependsOn: Test
+  condition: and(succeeded('Build'), eq(variables['Build.SourceBranch'], 'refs/heads/dev'))
+  variables:
+    - group: products-microservice-dev
+
+  jobs:
+  - deployment: DeploymentToDev
+    displayName: Deployment to Dev Environment
+    environment: dev
+    strategy:
+      runOnce:
+        deploy:
+            steps:
+            - checkout: self
+              displayName: Checkout source code
+
+            - script: |
+                echo "Listing contencts of K8s"
+                ls -l $(Build.SourcesDirectory)/k8s/dev
+              displayName: 'List Files in k8s/dev Directory'
+
+            - script: |
+                find $(Build.SourcesDirectory)/k8s/dev -type f \( -name "*.yaml" -o -name "*.yml" \) -exec sed -i 's/__TAG__/$(tag)/g' {} +
+              displayName: 'Replace image tag in all deployment files'
+
+            - task: Kubernetes@1
+              displayName: Deploy to dev namespace in kubernetes
+              inputs:
+                kubernetesServiceEndpoint: $(devAksServiceConnectionName)
+                kubernetesCluster: $(aksClusterName)
+                namespace: $(kubernetesNamespace)
+                command: apply
+                arguments: '-f $(Build.SourcesDirectory)/k8s/dev'

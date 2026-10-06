@@ -95,6 +95,8 @@ public class RabbitMQPublisher : IRabbitMQPublisher, IDisposable
             basicProperties: null,
             body: messageBodyInBytes);
 
+        Console.WriteLine("Publishing through rabbitMQ");
+
     }
     
     

@@ -15,7 +15,7 @@ builder.Services.AddDataAccessLayer(builder.Configuration);
 
 // Add services from business logic layer
 
-builder.Services.AddBusinessLogicLayer();
+builder.Services.AddBusinessLogicLayer(builder.Configuration);
 builder.Services.AddControllers();
 //Fluent validations
 builder.Services.AddFluentValidationAutoValidation();
